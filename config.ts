@@ -2,7 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { fireworks } from "@ai-sdk/fireworks";
 import { wrapLanguageModel, extractReasoningMiddleware } from "ai";
 
-export const MODEL = openai('gpt-4.1');
+export const MODEL = openai('gpt-5');
 
 // If you want to use a Fireworks model, uncomment the following code and set the FIREWORKS_API_KEY in Vercel
 // NOTE: Use middleware when the reasoning tag is different than think. (Use ChatGPT to help you understand the middleware)
@@ -33,7 +33,7 @@ export const DATE_AND_TIME = getDateAndTime();
 export const AI_NAME = "T & Brew";
 export const OWNER_NAME = "J";
 
-export const WELCOME_MESSAGE = `Hello! I'm ${AI_NAME}, an AI assistant created by ${OWNER_NAME}.`
+export const WELCOME_MESSAGE = `Hello! I'm ${AI_NAME}, an AI coffee assistant created by ${OWNER_NAME}.`
 
 export const CLEAR_CHAT_TEXT = "New";
 
