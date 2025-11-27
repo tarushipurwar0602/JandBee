@@ -37,6 +37,7 @@ const loadMessagesFromStorage = (): { messages: UIMessage[]; durations: Record<s
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { messages: [], durations: {} };
+
     const parsed = JSON.parse(stored);
     return {
       messages: parsed.messages || [],
@@ -63,7 +64,8 @@ export default function Chat() {
   const [durations, setDurations] = useState<Record<string, number>>({});
   const welcomeMessageShownRef = useRef<boolean>(false);
 
-  const stored = typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
+  const stored =
+    typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
@@ -84,14 +86,17 @@ export default function Chat() {
 
   const handleDurationChange = (key: string, duration: number) => {
     setDurations((prevDurations) => {
-      return { ...prevDurations, [key]: duration };
+      const newDurations = { ...prevDurations };
+      newDurations[key] = duration;
+      return newDurations;
     });
   };
 
+  // ✅ FIXED: id now uses a proper template string
   useEffect(() => {
     if (isClient && initialMessages.length === 0 && !welcomeMessageShownRef.current) {
       const welcomeMessage: UIMessage = {
-        id: welcome-${Date.now()},
+        id: `welcome-${Date.now()}`,
         role: "assistant",
         parts: [
           {
@@ -108,7 +113,9 @@ export default function Chat() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { message: "" },
+    defaultValues: {
+      message: "",
+    },
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
@@ -128,20 +135,18 @@ export default function Chat() {
   return (
     <div className="flex h-screen items-center justify-center font-sans bg-[#F5F5DC] dark:bg-[#472A28]">
       <main className="w-full h-screen relative bg-[#F5F5DC] dark:bg-[#472A28]">
-        {/* Header with coffee theme */}
+        {/* Header – subtle coffee theme */}
         <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-[#F5F5DC] via-[#F5F5DC]/50 to-transparent dark:from-[#472A28] dark:via-[#472A28]/50 dark:to-transparent overflow-visible pb-16">
           <div className="relative overflow-visible">
             <ChatHeader>
               <ChatHeaderBlock />
-              <ChatHeaderBlock className="justify-center items-center">
-                {/* Coffee icon instead of avatar logo */}
-                <Coffee className="text-[#A3795B] w-8 h-8 mr-2" />
-                <p className="tracking-tight text-xl font-semibold text-[#472A28]">
+              <ChatHeaderBlock className="justify-center items-center gap-2">
+                <Coffee className="w-8 h-8 text-[#A3795B]" />
+                <p className="tracking-tight text-xl font-semibold text-[#472A28] dark:text-[#F5F5DC]">
                   Chat with {AI_NAME}
                 </p>
               </ChatHeaderBlock>
               <ChatHeaderBlock className="justify-end">
-                {/* Clear chat button with coffee-tone border/text */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -155,6 +160,7 @@ export default function Chat() {
             </ChatHeader>
           </div>
         </div>
+
         {/* Messages area */}
         <div className="h-screen overflow-y-auto px-5 py-4 w-full pt-[88px] pb-[150px]">
           <div className="flex flex-col items-center justify-end min-h-full">
@@ -168,22 +174,22 @@ export default function Chat() {
                 />
                 {status === "submitted" && (
                   <div className="flex justify-start max-w-3xl w-full">
-                    {/* Coffee cup loading indicator */}
+                    {/* Coffee pot / cup “thinking” motif */}
                     <Coffee className="size-4 animate-pulse text-muted-foreground" />
                   </div>
                 )}
               </>
             ) : (
-              /* Initial loading state (show coffee icon spinner) */
               <div className="flex justify-center max-w-2xl w-full">
                 <Coffee className="size-4 animate-pulse text-muted-foreground" />
               </div>
             )}
           </div>
         </div>
-        {/* Input box area */}
+
+        {/* Input area */}
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#F5F5DC] via-[#F5F5DC]/50 to-transparent dark:from-[#472A28] dark:via-[#472A28]/50 dark:to-transparent overflow-visible pt-13">
-          <div className="w-full px-5 pt-5 pb-1 flex justify-center relative overflow-visible">
+          <div className="w-full px-5 pt-5 pb-1 items-center flex justify-center relative overflow-visible">
             <div className="message-fade-overlay" />
             <div className="max-w-3xl w-full">
               <form id="chat-form" onSubmit={form.handleSubmit(onSubmit)}>
@@ -200,11 +206,11 @@ export default function Chat() {
                           <Input
                             {...field}
                             id="chat-form-message"
+                            className="h-15 pr-15 pl-5 bg-[#C6AB80] dark:bg-[#56382E] rounded-[20px] text-[#472A28] dark:text-[#F5F5DC]"
                             placeholder="Type your message here..."
                             disabled={status === "streaming"}
                             aria-invalid={fieldState.invalid}
                             autoComplete="off"
-                            className="h-15 pr-15 pl-5 rounded-[20px] bg-[#C6AB80] dark:bg-[#56382E] text-[#472A28] dark:text-[#F5F5DC]"
                             onKeyDown={(e) => {
                               if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
@@ -219,14 +225,16 @@ export default function Chat() {
                               disabled={!field.value.trim()}
                               size="icon"
                             >
-                              <ArrowUp className="size-4" />
+                                <ArrowUp className="size-4" />
                             </Button>
                           )}
-                          {status === "streaming" && (
+                          {(status === "streaming" || status === "submitted") && (
                             <Button
                               className="absolute right-2 top-2 rounded-full"
                               size="icon"
-                              onClick={() => stop()}
+                              onClick={() => {
+                                stop();
+                              }}
                             >
                               <Square className="size-4" />
                             </Button>
@@ -239,11 +247,15 @@ export default function Chat() {
               </form>
             </div>
           </div>
-          {/* Footer */}
-          <div className="w-full px-5 py-3 flex justify-center text-xs text-muted-foreground">
+          <div className="w-full px-5 py-3 items-center flex justify-center text-xs text-muted-foreground">
             ©️ {new Date().getFullYear()} {OWNER_NAME}&nbsp;
-            <Link href="/terms" className="underline">Terms of Use</Link>&nbsp;
-            Powered by&nbsp;<Link href="https://ringel.ai/" className="underline">Ringel.AI</Link>
+            <Link href="/terms" className="underline">
+              Terms of Use
+            </Link>
+            &nbsp;Powered by&nbsp;
+            <Link href="https://ringel.ai/" className="underline">
+              Ringel.AI
+            </Link>
           </div>
         </div>
       </main>
