@@ -54,7 +54,7 @@ const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, 
     const data: StorageData = { messages, durations };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error("Failed to save messages to localStorage:", error);
+    console.error("Failed to save messages from localStorage:", error);
   }
 };
 
@@ -63,7 +63,8 @@ export default function Chat() {
   const [durations, setDurations] = useState<Record<string, number>>({});
   const welcomeMessageShownRef = useRef<boolean>(false);
 
-  const stored = typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
+  const stored =
+    typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
   const [initialMessages] = useState<UIMessage[]>(stored.messages);
 
   const { messages, sendMessage, status, stop, setMessages } = useChat({
@@ -83,15 +84,17 @@ export default function Chat() {
   }, [durations, messages, isClient]);
 
   const handleDurationChange = (key: string, duration: number) => {
-    setDurations((prevDurations) => {
-      return { ...prevDurations, [key]: duration };
-    });
+    setDurations((prevDurations) => ({
+      ...prevDurations,
+      [key]: duration,
+    }));
   };
 
   useEffect(() => {
     if (isClient && initialMessages.length === 0 && !welcomeMessageShownRef.current) {
       const welcomeMessage: UIMessage = {
-        id: welcome-${Date.now()},
+        // 🔥 IMPORTANT: this MUST be a string
+        id: `welcome-${Date.now()}`,
         role: "assistant",
         parts: [
           {
@@ -136,7 +139,7 @@ export default function Chat() {
               <ChatHeaderBlock className="justify-center items-center">
                 {/* Coffee icon instead of avatar logo */}
                 <Coffee className="text-[#A3795B] w-8 h-8 mr-2" />
-                <p className="tracking-tight text-xl font-semibold text-[#472A28]">
+                <p className="tracking-tight text-xl font-semibold text-[#472A28] dark:text-[#F5F5DC]">
                   Chat with {AI_NAME}
                 </p>
               </ChatHeaderBlock>
@@ -155,6 +158,7 @@ export default function Chat() {
             </ChatHeader>
           </div>
         </div>
+
         {/* Messages area */}
         <div className="h-screen overflow-y-auto px-5 py-4 w-full pt-[88px] pb-[150px]">
           <div className="flex flex-col items-center justify-end min-h-full">
@@ -181,6 +185,7 @@ export default function Chat() {
             )}
           </div>
         </div>
+
         {/* Input box area */}
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#F5F5DC] via-[#F5F5DC]/50 to-transparent dark:from-[#472A28] dark:via-[#472A28]/50 dark:to-transparent overflow-visible pt-13">
           <div className="w-full px-5 pt-5 pb-1 flex justify-center relative overflow-visible">
@@ -239,11 +244,17 @@ export default function Chat() {
               </form>
             </div>
           </div>
+
           {/* Footer */}
           <div className="w-full px-5 py-3 flex justify-center text-xs text-muted-foreground">
             ©️ {new Date().getFullYear()} {OWNER_NAME}&nbsp;
-            <Link href="/terms" className="underline">Terms of Use</Link>&nbsp;
-            Powered by&nbsp;<Link href="https://ringel.ai/" className="underline">Ringel.AI</Link>
+            <Link href="/terms" className="underline">
+              Terms of Use
+            </Link>
+            &nbsp;Powered by&nbsp;
+            <Link href="https://ringel.ai/" className="underline">
+              Ringel.AI
+            </Link>
           </div>
         </div>
       </main>
